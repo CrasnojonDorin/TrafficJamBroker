@@ -25,13 +25,17 @@ class ServerConfiguration {
 
       final client = ClientModel.fromMap(deserialization);
 
-      log('${client.getName} join to server');
+      client.socket.listen((a){
+
+      });
+
+      log('${client.name} join to server');
 
       clients.add(client);
 
       clients.forEach((e){
-        if(client.getName != e.getName){
-          server.
+        if(client.name != e.name){
+          e.socket?.write('alio');
         }
       });
     }, onError: (e) {

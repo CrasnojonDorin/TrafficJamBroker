@@ -9,7 +9,7 @@ class PublisherController {
     required this.clients
   })
 
-  void publish(ClientModel publisher) {
+  void publish(,ClientModel publisher) {
     for(var subscriber in clients){
       if(subscriber.name != publisher.name){
         handlePublish(subscriber);
@@ -19,7 +19,8 @@ class PublisherController {
 
   void handlePublish(ClientModel client){
     try{
-    Socket.connect(client.socket.remoteAddress, client.socket.remotePort).then((a)=>a.);}catch(e){
+      client.socket.write();
+    }catch(e){
 
     }
   }
