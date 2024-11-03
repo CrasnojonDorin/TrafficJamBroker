@@ -10,11 +10,12 @@ import '../recources/constans.dart';
 void main() async{
   try {
     final Socket socket = await Socket.connect('localhost', Constants.port);
-
+  //  old 47.03497148881504, 28.847812288152927
+  // new 47.03479782240975, 28.847501151911985
     socket.listen((event) {
       final message = String.fromCharCodes(event);
 
-      print('ID: $message');
+      print('$message');
     }, onError: (e) {
       print('Destroy socket $e');
       socket.destroy();

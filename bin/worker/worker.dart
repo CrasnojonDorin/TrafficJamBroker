@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import '../controller/threade_safe_queue.dart';
 import '../models/updated_location.dart';
 import '../models/connection_info.dart';
@@ -22,11 +21,23 @@ class Worker {
 
         if (data != null) {
 
-          log(data.location.toMap().toString());
+          Map<String, dynamic> map = data.location.toMap();
+
+          final index = connections.indexWhere((element) => element.client.id == data.id);
+
+          connections[index].client.setVelocity(time: DateTime.now(), newLocation: data.location);
+
+          map.addAll({
+            "velocity": connections[index].client.velocity.toString(),
+            "name": connections[index].client.name,
+            "id":connections[index].client.id
+          });
 
           for (var element in connections) {
-            if(element.id != data.id){
-            element.socket.write(jsonEncode(data.toMap()));}
+            if(element.client.id != data.id){
+            element.socket.write(jsonEncode(
+               map
+            ));}
           }
         }
 

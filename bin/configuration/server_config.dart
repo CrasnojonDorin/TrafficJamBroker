@@ -26,7 +26,8 @@ class ServerConfiguration {
   final queue = ThreadSafeQueue<UpdatedLocation>();
 
   void handleConnection(Socket client, ServerSocket server) {
-    print('Client ${client.port}:${client.port} was connected');
+    print(
+        'Client ${client.remoteAddress.host}:${client.remotePort} was connected');
 
     client.listen((data1) {
       final message = String.fromCharCodes(data1);
@@ -45,10 +46,18 @@ class ServerConfiguration {
       }
     }, onDone: () {
       print('Server: Client left');
+      removeAndNotifyClients(client);
     }, onError: (e) {
+      removeAndNotifyClients(client);
       print('WARNING Server: Client left');
-      client.close;
     });
+  }
+
+  void removeAndNotifyClients(Socket client) {
+    clients.removeWhere(
+        (element) => element.socket.remotePort == client.remotePort);
+
+    client.close();
   }
 
   void subscribe({required Socket client, required Map<String, dynamic> data}) {
@@ -60,7 +69,9 @@ class ServerConfiguration {
       print('${clientFromMap.name} join the party');
 
       final ConnectionInfo connectionInfo =
-          ConnectionInfo(socket: client, id: clientFromMap.id);
+          ConnectionInfo(socket: client, client: clientFromMap);
+
+      sendClientsToNewConnection(connectionInfo);
 
       clients.add(connectionInfo);
 
@@ -73,6 +84,21 @@ class ServerConfiguration {
     } catch (e, s) {
       print('SubscribeError $e $s');
     }
+  }
+
+  void sendClientsToNewConnection(ConnectionInfo newConnection) {
+    List<ConnectionInfo> targetClients = [];
+
+    for (var element in clients) {
+      if (element.client.id != newConnection.client.id) {
+        targetClients.add(element);
+      }
+    }
+
+    String encode =
+        jsonEncode(targetClients.map((e) => e.client.toMap()).toList());
+
+    newConnection.socket.write(encode);
   }
 
   void publish(UpdatedLocation location) {

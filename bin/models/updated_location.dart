@@ -9,9 +9,10 @@ class UpdatedLocation{
     required this.id,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({double? velocity}) {
     return {
       'location': location.toMap(),
+      'velocity': velocity.toString(),
       'id': id,
     };
   }
