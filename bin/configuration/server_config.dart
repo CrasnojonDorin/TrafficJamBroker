@@ -55,7 +55,7 @@ class ServerConfiguration {
 
   void removeAndNotifyClients(Socket client) {
     try {
-      print(client.remotePort.toString());
+      //print(client.remotePort.toString());
 
       final index = clients.indexWhere(
           (element) => element.socket.remotePort == client.remotePort);

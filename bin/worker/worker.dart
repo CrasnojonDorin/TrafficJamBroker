@@ -37,7 +37,9 @@ class Worker {
             if(element.client.id != data.id){
             element.socket.write(jsonEncode(
                map
-            ));}
+            ));}else{
+              element.socket.write(connections[index].client.velocity);
+            }
           }
         }
 
