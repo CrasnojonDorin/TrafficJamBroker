@@ -54,8 +54,24 @@ class ServerConfiguration {
   }
 
   void removeAndNotifyClients(Socket client) {
-    clients.removeWhere(
-        (element) => element.socket.remotePort == client.remotePort);
+    try {
+      print(client.remotePort.toString());
+
+      final index = clients.indexWhere(
+          (element) => element.socket.remotePort == client.remotePort);
+
+      if (index != -1) {
+        final id = clients[index].client.id;
+
+        clients.removeAt(index);
+
+        for (var element in clients) {
+          element.socket.write('Remove $id');
+        }
+      }
+    } catch (e) {
+      print('NotifyLeftedClient Error $e');
+    }
 
     client.close();
   }
