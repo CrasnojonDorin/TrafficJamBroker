@@ -4,10 +4,9 @@ import 'client_model.dart';
 
 class ConnectionInfo{
   final Socket socket;
-  final ClientModel client;
+  ClientModel? client;
 
-  const ConnectionInfo({
+   ConnectionInfo({
     required this.socket,
-    required this.client
   });
 }

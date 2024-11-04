@@ -1,18 +1,21 @@
+import 'dart:collection';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:trafic_jam/configuration/server_config.dart';
-import 'package:trafic_jam/worker/traffic_analyzer_worker.dart';
+import 'package:trafic_jam/storage/payload_storage.dart';
+import 'package:trafic_jam/worker/worker.dart';
 
 void main(List<String> arguments) {
   final server = ServerConfiguration();
 
   server.run();
 
-  final connections = server.clients;
+  final receivePort = ReceivePort();
 
-  final queue = server.queue;
+  // PayloadStorage.setWorkerSendPort(receivePort.sendPort);
 
-  final worker = Worker(connections: connections, queue: queue);
+  final updateLocationWorker = Worker();
 
-   worker.notify();
+  updateLocationWorker.notify();
 }

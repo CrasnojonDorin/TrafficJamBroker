@@ -33,6 +33,8 @@ class ClientModel {
       // Calculăm viteza în metri pe secundă
       velocity = (distance / timeInSeconds)*3.6;
 
+      print('$name has $velocity km/h');
+
       // Actualizăm ultima locație și timpul
       location = newLocation;
       timeUpdated = time;

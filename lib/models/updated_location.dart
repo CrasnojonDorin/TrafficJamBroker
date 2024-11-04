@@ -1,10 +1,12 @@
 import 'location_model.dart';
 
 class UpdatedLocation{
+  final String topic;
   final LocationModel location;
   final String id;
 
   const UpdatedLocation({
+    this.topic = 'update',
     required this.location,
     required this.id,
   });

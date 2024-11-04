@@ -1,12 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
-import '../controller/threade_safe_queue.dart';
+import 'package:trafic_jam/models/enum_payload_topic.dart';
+import 'package:trafic_jam/models/payload.dart';
+import 'package:trafic_jam/storage/connection_storage.dart';
+import 'package:trafic_jam/storage/payload_storage.dart';
 import '../models/client_model.dart';
 import '../models/connection_info.dart';
 import '../models/updated_location.dart';
 import '../recources/constans.dart';
+import 'package:synchronized/synchronized.dart';
 
 class ServerConfiguration {
+  static final Lock lock = Lock();
+
   void run() async {
     try {
       final ip = InternetAddress.anyIPv4;
@@ -21,15 +27,15 @@ class ServerConfiguration {
     }
   }
 
-  List<ConnectionInfo> clients = [];
-
-  final queue = ThreadSafeQueue<UpdatedLocation>();
-
-  final trafficQueue = ThreadSafeQueue();
-
   void handleConnection(Socket client, ServerSocket server) {
     print(
         'Client ${client.remoteAddress.host}:${client.remotePort} was connected');
+
+    final newConnection =ConnectionInfo(socket: client);
+
+    ConnectionStorage.clients.add(newConnection);
+
+    sendClientsToNewConnection(newConnection);
 
     client.listen((data1) {
       final message = String.fromCharCodes(data1);
@@ -39,7 +45,7 @@ class ServerConfiguration {
       if (data is Map<String, dynamic>) {
         if (data.containsKey('topic')) {
           if (data['topic'] == 'subscribe') {
-            subscribe(client: client, data: data);
+            subscribe(client: newConnection, data: data);
           } else if (data['topic'] == 'publish') {
             final location = UpdatedLocation.fromMap(data);
             publish(location);
@@ -55,19 +61,36 @@ class ServerConfiguration {
     });
   }
 
+  void sendClientsToNewConnection(ConnectionInfo newConnection) {
+    List<ConnectionInfo> targetClients = [];
+
+    for (var element in ConnectionStorage.clients) {
+      if (element.client?.id != newConnection.client?.id) {
+        targetClients.add(element);
+      }
+    }
+
+    final clients =
+   targetClients.map((e) => e.client?.toMap()).toList();
+
+    final clientsPayload = Payload(topic: PayloadTopic.getClients, data: clients);
+
+    newConnection.socket.write(clientsPayload.toMap());
+  }
+
   void removeAndNotifyClients(Socket client) {
     try {
       //print(client.remotePort.toString());
 
-      final index = clients.indexWhere(
+      final index = ConnectionStorage.clients.indexWhere(
           (element) => element.socket.remotePort == client.remotePort);
 
       if (index != -1) {
-        final id = clients[index].client.id;
+        final id = ConnectionStorage.clients[index].client?.id;
 
-        clients.removeAt(index);
+        ConnectionStorage.clients.removeAt(index);
 
-        for (var element in clients) {
+        for (var element in ConnectionStorage.clients) {
           element.socket.write('Remove $id');
         }
       }
@@ -78,63 +101,42 @@ class ServerConfiguration {
     client.close();
   }
 
-  void subscribe({required Socket client, required Map<String, dynamic> data}) {
+  void subscribe({required ConnectionInfo client, required Map<String, dynamic> data}) {
     try {
       final clientFromMap = ClientModel.fromMap(data);
 
-      final  bool check = checkIfExistUser(clientFromMap);
+      final bool check = checkIfExistUser(clientFromMap);
 
-      if(check){
+      if (check) {
         return;
       }
 
-      client.write(clientFromMap.id);
-
       print('${clientFromMap.name} join the party');
 
-      final ConnectionInfo connectionInfo =
-          ConnectionInfo(socket: client, client: clientFromMap);
-
-      sendClientsToNewConnection(connectionInfo);
-
-      clients.add(connectionInfo);
+      client.client = clientFromMap;
 
       if (clientFromMap.location != null) {
-        final entity = UpdatedLocation(
+        final entity = UpdatedLocation(topic: 'subscribe',
             location: clientFromMap.location!, id: clientFromMap.id);
 
-        queue.enqueue(entity);
+        PayloadStorage.add(entity);
       }
     } catch (e, s) {
       print('SubscribeError $e $s');
     }
   }
 
-  bool checkIfExistUser(ClientModel newModel){
-    final i = clients.indexWhere((e)=>newModel.id == e.client.id);
+  bool checkIfExistUser(ClientModel newModel) {
+    final i =
+        ConnectionStorage.clients.indexWhere((e) => newModel.id == e.client?.id);
 
     print('Client Index: $i');
 
     return i != -1;
-
-  }
-
-  void sendClientsToNewConnection(ConnectionInfo newConnection) {
-    List<ConnectionInfo> targetClients = [];
-
-    for (var element in clients) {
-      if (element.client.id != newConnection.client.id) {
-        targetClients.add(element);
-      }
-    }
-
-    String encode =
-        jsonEncode(targetClients.map((e) => e.client.toMap()).toList());
-
-    newConnection.socket.write(encode);
   }
 
   void publish(UpdatedLocation location) {
-    queue.enqueue(location);
+    print(location.location.address);
+    PayloadStorage.add(location);
   }
 }
