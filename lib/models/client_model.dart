@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'location_model.dart';
 import 'package:uuid/uuid.dart';
 
@@ -32,7 +31,7 @@ class ClientModel {
       double timeInSeconds = time.difference(timeUpdated).inSeconds.toDouble();
 
       // Calculăm viteza în metri pe secundă
-      velocity = distance / timeInSeconds;
+      velocity = (distance / timeInSeconds)*3.6;
 
       // Actualizăm ultima locație și timpul
       location = newLocation;

@@ -35,10 +35,10 @@ class Worker {
 
           for (var element in connections) {
             if(element.client.id != data.id){
-            element.socket.write(jsonEncode(
-               map
-            ));}else{
-              element.socket.write(connections[index].client.velocity);
+              element.socket.write(jsonEncode(
+                  map
+              ));}else{
+              element.socket.write('Speed: ${connections[index].client.velocity?.toStringAsFixed(2)} km/h');
             }
           }
         }

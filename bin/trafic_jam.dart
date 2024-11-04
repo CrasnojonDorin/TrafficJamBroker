@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'configuration/server_config.dart';
-import 'worker/worker.dart';
+import 'package:trafic_jam/configuration/server_config.dart';
+import 'package:trafic_jam/worker/traffic_analyzer_worker.dart';
 
 void main(List<String> arguments) {
   final server = ServerConfiguration();

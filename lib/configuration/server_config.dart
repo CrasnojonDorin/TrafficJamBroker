@@ -25,6 +25,8 @@ class ServerConfiguration {
 
   final queue = ThreadSafeQueue<UpdatedLocation>();
 
+  final trafficQueue = ThreadSafeQueue();
+
   void handleConnection(Socket client, ServerSocket server) {
     print(
         'Client ${client.remoteAddress.host}:${client.remotePort} was connected');
@@ -80,6 +82,12 @@ class ServerConfiguration {
     try {
       final clientFromMap = ClientModel.fromMap(data);
 
+      final  bool check = checkIfExistUser(clientFromMap);
+
+      if(check){
+        return;
+      }
+
       client.write(clientFromMap.id);
 
       print('${clientFromMap.name} join the party');
@@ -100,6 +108,15 @@ class ServerConfiguration {
     } catch (e, s) {
       print('SubscribeError $e $s');
     }
+  }
+
+  bool checkIfExistUser(ClientModel newModel){
+    final i = clients.indexWhere((e)=>newModel.id == e.client.id);
+
+    print('Client Index: $i');
+
+    return i != -1;
+
   }
 
   void sendClientsToNewConnection(ConnectionInfo newConnection) {
