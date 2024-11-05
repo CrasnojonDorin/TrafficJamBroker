@@ -10,4 +10,12 @@ class TrafficJamModel {
     required this.startLocation,
     required this.endLocation,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'street': streetName,
+      'startLocation': startLocation.toMap(),
+      'endLocation': endLocation.toMap(),
+    };
+  }
 }

@@ -1,1 +1,1 @@
-enum PayloadTopic {getId, getClients, updateClient, getTrafficJam, getSpeed}
+enum PayloadTopic {getId, getClient, getClients, updateClient, getTrafficJam, getSpeed}

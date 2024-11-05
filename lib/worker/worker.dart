@@ -117,21 +117,25 @@ class Worker {
 
     handleTrafficController();
 
+
+
     map.addAll({
       "velocity": ConnectionStorage.clients[index].client?.velocity.toString(),
       "name": ConnectionStorage.clients[index].client?.name,
       "id":ConnectionStorage.clients[index].client?.id
     });
 
-    final updatedClientPayload = Payload(topic: PayloadTopic.updateClient, data: map);
+    final updatedClientPayload = Payload(topic: PayloadTopic.updateClient, data: ConnectionStorage.clients[index].client?.toMap());
 
     for (var element in ConnectionStorage.clients) {
       if(element.client?.id != data.id){
-        element.socket.write(updatedClientPayload.toMap());}else{
+        element.socket.write(jsonEncode(updatedClientPayload.toMap()));
+      }
+      else{
 
         final speedPayload = Payload(topic: PayloadTopic.getSpeed, data: {'speed': ConnectionStorage.clients[index].client?.velocity?.toStringAsFixed(2)});
 
-        element.socket.write(speedPayload.toMap());
+        element.socket.write(jsonEncode(speedPayload.toMap()));
       }
     }
   }

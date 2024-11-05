@@ -10,7 +10,7 @@ import '../models/updated_location.dart';
 import '../recources/constans.dart';
 import 'package:synchronized/synchronized.dart';
 
-class ServerConfiguration {
+class BrokerSocket {
   static final Lock lock = Lock();
 
   void run() async {
@@ -71,11 +71,11 @@ class ServerConfiguration {
     }
 
     final clients =
-   targetClients.map((e) => e.client?.toMap()).toList();
+    targetClients.map((e) => e.client?.toMap()).toList();
 
     final clientsPayload = Payload(topic: PayloadTopic.getClients, data: clients);
 
-    newConnection.socket.write(clientsPayload.toMap());
+    newConnection.socket.write(jsonEncode(clientsPayload.toMap()));
   }
 
   void removeAndNotifyClients(Socket client) {
@@ -83,7 +83,7 @@ class ServerConfiguration {
       //print(client.remotePort.toString());
 
       final index = ConnectionStorage.clients.indexWhere(
-          (element) => element.socket.remotePort == client.remotePort);
+              (element) => element.socket.remotePort == client.remotePort);
 
       if (index != -1) {
         final id = ConnectionStorage.clients[index].client?.id;
@@ -91,7 +91,7 @@ class ServerConfiguration {
         ConnectionStorage.clients.removeAt(index);
 
         for (var element in ConnectionStorage.clients) {
-          element.socket.write('Remove $id');
+          element.socket.write(jsonEncode({'topic':'removeId', 'data': {'id':id}}));
         }
       }
     } catch (e) {
@@ -128,7 +128,7 @@ class ServerConfiguration {
 
   bool checkIfExistUser(ClientModel newModel) {
     final i =
-        ConnectionStorage.clients.indexWhere((e) => newModel.id == e.client?.id);
+    ConnectionStorage.clients.indexWhere((e) => newModel.id == e.client?.id);
 
     print('Client Index: $i');
 

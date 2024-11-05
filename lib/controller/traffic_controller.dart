@@ -1,30 +1,53 @@
+import 'dart:convert';
 import 'dart:math';
 
+import 'package:trafic_jam/models/enum_payload_topic.dart';
+import 'package:trafic_jam/models/payload.dart';
 import 'package:trafic_jam/recources/constans.dart';
 import 'package:trafic_jam/storage/connection_storage.dart';
 
 import '../models/client_model.dart';
 import '../models/location_model.dart';
+import '../models/traffice_jam_model.dart';
 
 class TrafficAnalysis {
 
   void checkTrafficJam() {
     print('CheckTrafficJam');
 
-    final List<ClientModel> clients = ConnectionStorage.clients.where((e)=>e.client != null).map((e)=>e.client!).toList();
-    // Găsim toți clienții cu viteză <= 10 km/h
+    final List<ClientModel> clients = ConnectionStorage.clients.where((e) => e.client != null).map((e) => e.client!).toList();
+
+    // Identify slow drivers
     List<ClientModel> slowDrivers = clients.where((client) => client.velocity != null && client.velocity! <= Constants.limitSpeed).toList();
 
-    print('Clients: ${clients.map((e)=>e.velocity).toList().toString()} ');
+    print('Clients: ${clients.map((e) => e.velocity).toList()}');
 
-    // Verificăm dacă avem minim doi șoferi pe aceeași stradă
+    // Check if there are at least two slow drivers on the same street
     for (var i = 0; i < slowDrivers.length; i++) {
       for (var j = i + 1; j < slowDrivers.length; j++) {
         if (slowDrivers[i].location?.address == slowDrivers[j].location?.address &&
             _areMovingInSameDirection(slowDrivers[i], slowDrivers[j]) &&
             _areWithinMaxDistance(slowDrivers[i].location!, slowDrivers[j].location!)) {
-          print("Atenție: Ambuteiaj detectat! Min 2 șoferi se deplasează cu <= ${Constants.limitSpeed} km/h pe strada ${slowDrivers[i].location?.address}.");
-          return; // O alertă este suficientă, ieșim din funcție
+
+          // Create TrafficJamModel with the first and last driver in the traffic jam
+          TrafficJamModel trafficJam = TrafficJamModel(
+            streetName: slowDrivers[i].location!.address!,
+            startLocation: slowDrivers[i].location!,
+            endLocation: slowDrivers[j].location!,
+          );
+
+          final payload = Payload(topic: PayloadTopic.getTrafficJam, data: trafficJam.toMap());
+
+          // Send or print traffic jam alert
+          for (var e in ConnectionStorage.clients) {
+            e.socket.write(jsonEncode(payload.toMap()));
+          }
+
+          print("Atenție: Ambuteiaj detectat! Min 2 șoferi se deplasează cu <= ${Constants.limitSpeed} km/h pe strada ${trafficJam.streetName}.");
+          print("Start Location: ${trafficJam.startLocation.toMap()}");
+          print("End Location: ${trafficJam.endLocation.toMap()}");
+
+          return; // Exit function after reporting the first traffic jam found
         }
       }
     }

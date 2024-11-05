@@ -7,11 +7,11 @@ import 'package:uuid/uuid.dart';
 import '../models/location_model.dart';
 import '../recources/constans.dart';
 
-void main() async{
+void main() async {
   try {
     final Socket socket = await Socket.connect('localhost', Constants.port);
-   final oldlat = 47.038451158297995;
-   final oldLong = 28.852653477334425;
+    final oldlat = 47.038451158297995;
+    final oldLong = 28.852653477334425;
 
     String? scene;
 
@@ -20,26 +20,26 @@ void main() async{
 
       print('$message');
 
-      try{
+      try {
         final bool isValidUUID = Uuid.isValidUUID(fromString: message);
 
-        if(isValidUUID){
-          if(scene != null){
-            switch(scene){
+        if (isValidUUID) {
+          if (scene != null) {
+            switch (scene) {
               case 'a':
                 testNewData(message, socket);
                 break;
-                case 'b':
-                  testNewDataSecondDriver(message, socket);
-                  break;
-                  case 'c':
-                    testNewDataThirdDriverReverse(message, socket);
-                    break;
+              case 'b':
+                testNewDataSecondDriver(message, socket);
+                break;
+              case 'c':
+                testNewDataThirdDriverReverse(message, socket);
+                break;
             }
           }
           //testNewData(message, socket);
         }
-      }catch(e){
+      } catch (e) {
         print(e.toString());
       }
     }, onError: (e) {
@@ -50,42 +50,47 @@ void main() async{
       socket.destroy();
     });
 
+    final (String, String, String) t = await Isolate.run(() {
+      String? username;
 
+      String? phone;
 
-   final (String, String, String) t = await Isolate.run(() {
-     String? username;
+      String? scene;
 
-     String? phone;
+      do {
+        print('Enter username:');
+        username = stdin.readLineSync();
+        print('Enter phone:');
+        phone = stdin.readLineSync();
+        print('Alege scenariul:\n');
+        print(
+            'a) Soferul se misca 7 metri pe bulevardul renasterii la diferenta de 3 secunde\n');
+        print(
+            'b) Soferul se misca inainte la primul sofer cu 7 metri pe bulevardul renasterii la diferenta de 3 secunde\n');
+        print(
+            'c) Soferul se misca pe bulevardul renasterii in sens opus la a) si b)');
+        scene = stdin.readLineSync();
+      } while (username == null ||
+          username.isEmpty ||
+          phone == null ||
+          phone.isEmpty ||
+          scene == null ||
+          scene.isEmpty);
 
-     String? scene;
+      return (username, phone, scene);
+    });
 
-     do {
-       print('Enter username:');
-       username = stdin.readLineSync();
-       print('Enter phone:');
-       phone = stdin.readLineSync();
-       print('Alege scenariul:\n');
-       print('a) Soferul se misca 7 metri pe bulevardul renasterii la diferenta de 3 secunde\n');
-       print('b) Soferul se misca inainte la primul sofer cu 7 metri pe bulevardul renasterii la diferenta de 3 secunde\n');
-       print('c) Soferul se misca pe bulevardul renasterii in sens opus la a) si b)');
-       scene = stdin.readLineSync();
-     } while (username == null || username.isEmpty || phone == null ||
-         phone.isEmpty || scene == null || scene.isEmpty);
+    String username = t.$1;
 
-     return (username, phone, scene);
-   }
-    );
+    String phone = t.$2;
 
-   String username = t.$1;
+    scene = t.$3;
 
-   String phone = t.$2;
-
-   scene = t.$3;
-
-   final LocationModel location = LocationModel(lat: oldlat,long: oldLong, address: 'Street 1');
+    final LocationModel location =
+        LocationModel(lat: oldlat, long: oldLong, address: 'Street 1');
 
     final Map<String, dynamic> map = {
-      'topic':'subscribe',
+      'topic': 'subscribe',
       "name": username,
       "phone": phone,
       "location": location.toMap()
@@ -94,8 +99,7 @@ void main() async{
     final data = json.encode(map);
 
     socket.write(data);
-
-  }catch(e){
+  } catch (e) {
     print('CLient Error: $e');
   }
 }
@@ -104,14 +108,14 @@ void main() async{
 final newlat = 47.0383999758066;
 final newLong = 28.852587763215183;
 
-void testNewData(String id, Socket socket) async{
-
+void testNewData(String id, Socket socket) async {
   await Future.delayed(Duration(seconds: 3));
 
-  final LocationModel newloc = LocationModel(lat: newlat,long: newLong, address: 'Bulevardul Renasterii Nationale');
+  final LocationModel newloc = LocationModel(
+      lat: newlat, long: newLong, address: 'Bulevardul Renasterii Nationale');
 
   final Map<String, dynamic> newMap = {
-    'topic':'publish',
+    'topic': 'publish',
     "id": id,
     "location": newloc.toMap()
   };
@@ -123,14 +127,16 @@ void testNewData(String id, Socket socket) async{
   socket.write(newData);
 }
 
-void testNewDataSecondDriver(String id, Socket socket) async{
-
+void testNewDataSecondDriver(String id, Socket socket) async {
   await Future.delayed(Duration(seconds: 3));
 
-  final LocationModel newloc = LocationModel(lat: newlat+ 0.000063,long: newLong +0.000094, address: 'Bulevardul Renasterii Nationale');
+  final LocationModel newloc = LocationModel(
+      lat: newlat + 0.000063,
+      long: newLong + 0.000094,
+      address: 'Bulevardul Renasterii Nationale');
 
   final Map<String, dynamic> newMap = {
-    'topic':'publish',
+    'topic': 'publish',
     "id": id,
     "location": newloc.toMap()
   };
@@ -142,14 +148,16 @@ void testNewDataSecondDriver(String id, Socket socket) async{
   socket.write(newData);
 }
 
-void testNewDataThirdDriverReverse(String id, Socket socket) async{
-
+void testNewDataThirdDriverReverse(String id, Socket socket) async {
   await Future.delayed(Duration(seconds: 3));
 
-  final LocationModel newloc = LocationModel(lat: newlat- 0.000063,long: newLong -0.000094, address: 'Bulevardul Renasterii Nationale');
+  final LocationModel newloc = LocationModel(
+      lat: newlat - 0.000063,
+      long: newLong - 0.000094,
+      address: 'Bulevardul Renasterii Nationale');
 
   final Map<String, dynamic> newMap = {
-    'topic':'publish',
+    'topic': 'publish',
     "id": id,
     "location": newloc.toMap()
   };
